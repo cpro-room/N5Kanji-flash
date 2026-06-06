@@ -5,76 +5,203 @@
 <title>漢字テスト</title>
 
 <style>
+body {
+  font-family: "Yu Gothic", "Meiryo", sans-serif;
+  text-align: center;
+  margin: 0;
+  padding: 20px;
+}
+
+/* 漢字（かなり大きく） */
+.question {
+  font-size: clamp(100px, 30vw, 200px);
+  margin: 40px 0 10px;
+  line-height: 1.1;
+}
+
+/* 読み（はっきり見えるサイズ） */
+.reading {
+  font-size: clamp(40px, 10vw, 70px);
+  color: #333;
+  height: 90px;
+  margin-bottom: 30px;
+}
+
+/* ボタン（授業用・タップしやすく大きく） */
+button {
+  font-size: clamp(50px, 12vw, 80px);
+  padding: 18px 40px;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+}
+
+/* カウンター */
+.counter {
+  position: fixed;
+  right: 10px;
+  bottom: 10px;
+  font-size: 16px;
+  color: #666;
+}
+
+/* スマホ微調整 */
+@media (max-width: 600px) {
   body {
-    font-family: "Yu Gothic", "Meiryo", sans-serif;
-    text-align: center;
-    margin-top: 80px;
+    padding: 10px;
   }
 
-  .question {
-    font-size: 120px;
-    margin: 60px 0;
+  .reading {
+    height: 100px;
+    margin-bottom: 20px;
   }
 
   button {
-    font-size: 50px;
-    padding: 8px 24px;
+    width: 90%;
+    max-width: 320px;
   }
-
-  .counter {
-    position: fixed;
-    right: 10px;
-    bottom: 10px;
-    font-size: 18px;
-    color: #666;
-  }
-</style>
+}</style>
 </head>
 
 <body>
 
 <div class="question" id="question"></div>
-<button onclick="generate()">▶</button>
+<div class="reading" id="reading"></div>
+
+<button onclick="handle()">▶</button>
 <div class="counter" id="counter">1</div>
 
 <script>
 
-// ===== データ（グループ付き）=====
 const originalWords = [
-{w:"月よう日",g:"day"},{w:"火よう日",g:"day"},{w:"水よう日",g:"day"},
-{w:"木よう日",g:"day"},{w:"金よう日",g:"day"},{w:"土よう日",g:"day"},{w:"日よう日",g:"day"},
+{w:"月よう日",g:"day",r:"げつようび"},
+{w:"火よう日",g:"day",r:"かようび"},
+{w:"水よう日",g:"day",r:"すいようび"},
+{w:"木よう日",g:"day",r:"もくようび"},
+{w:"金よう日",g:"day",r:"きんようび"},
+{w:"土よう日",g:"day",r:"どようび"},
+{w:"日よう日",g:"day",r:"にちようび"},
 
-{w:"八千円",g:"number"},{w:"三百円",g:"number"},{w:"今年",g:"time"},{w:"三年",g:"time"},{w:"四時",g:"time"},{w:"何分",g:"time"},{w:"4時半",g:"time"},{w:"時間",g:"time"},
+{w:"八千円",g:"number",r:"はっせんえん"},
+{w:"三百円",g:"number",r:"さんびゃくえん"},
 
-{w:"お父さん",g:"family"},{w:"お母さん",g:"family"},{w:"父",g:"family"},{w:"母",g:"family"},
-{w:"兄",g:"family"},{w:"姉",g:"family"},{w:"弟",g:"family"},{w:"妹",g:"family"},{w:"兄弟",g:"family"},
+{w:"今年",g:"time",r:"ことし"},
+{w:"三年",g:"time",r:"さんねん"},
+{w:"日本人",g:"other",r:"にほんじん"},
+{w:"日本語",g:"other",r:"にほんご"},
+{w:"四時",g:"time",r:"よじ"},
+{w:"お父さん",g:"family",r:"おとうさん"},
+{w:"お母さん",g:"family",r:"おかあさん"},
+{w:"父",g:"family",r:"ちち"},
+{w:"母",g:"family",r:"はは"},
+{w:"兄",g:"family",r:"あに"},
+{w:"姉",g:"family",r:"あね"},
+{w:"弟",g:"family",r:"おとうと"},
+{w:"妹",g:"family",r:"いもうと"},
+{w:"兄弟",g:"family",r:"きょうだい"},
 
-{w:"口",g:"body"},{w:"目",g:"body"},{w:"耳",g:"body"},{w:"手",g:"body"},{w:"足",g:"body"},{w:"体",g:"body"},
+{w:"中国",g:"other",r:"ちゅうごく"},
+{w:"男の人",g:"other",r:"おとこのひと"},
+{w:"女の人",g:"other",r:"おんなのひと"},
+{w:"子ども",g:"other",r:"こども"},
 
-{w:"上",g:"dir"},{w:"下",g:"dir"},{w:"左",g:"dir"},{w:"右",g:"dir"},{w:"東",g:"dir"},{w:"西",g:"dir"},{w:"北",g:"dir"},{w:"南",g:"dir"},
+{w:"口",g:"body",r:"くち"},
+{w:"目",g:"body",r:"め"},
+{w:"耳",g:"body",r:"みみ"},
+{w:"手",g:"body",r:"て"},
+{w:"足",g:"body",r:"あし"},
+{w:"体",g:"body",r:"からだ"},
 
-{w:"学校",g:"place"},{w:"先生",g:"place"},{w:"本",g:"place"},{w:"町",g:"place"},{w:"お寺",g:"place"},
+{w:"上",g:"dir",r:"うえ"},
+{w:"下",g:"dir",r:"した"},
+{w:"左",g:"dir",r:"ひだり"},
+{w:"右",g:"dir",r:"みぎ"},
 
-{w:"山",g:"nature"},{w:"川",g:"nature"},{w:"田",g:"nature"},{w:"石",g:"nature"},{w:"雨",g:"nature"},{w:"森",g:"nature"},{w:"花",g:"nature"},
+{w:"大きい",g:"adj",r:"おおきい"},
+{w:"小さい",g:"adj",r:"ちいさい"},
+{w:"外",g:"other",r:"そと"},
 
-{w:"見ます",g:"verb"},{w:"立ちます",g:"verb"},{w:"入ります",g:"verb"},{w:"出ます",g:"verb"},
-{w:"行きます",g:"verb"},{w:"来ます",g:"verb"},{w:"書きます",g:"verb"},{w:"読みます",g:"verb"},{w:"話します",g:"verb"},{w:"聞きます",g:"verb"},
+{w:"学校",g:"place",r:"がっこう"},
+{w:"先生",g:"place",r:"せんせい"},
+{w:"本",g:"place",r:"ほん"},
+{w:"名まえ",g:"other",r:"なまえ"},
+{w:"友だち",g:"other",r:"ともだち"},
 
-{w:"食べます",g:"verb"},{w:"飲みます",g:"verb"},{w:"買います",g:"verb"},{w:"帰ります",g:"verb"},
+{w:"山",g:"nature",r:"やま"},
+{w:"川",g:"nature",r:"かわ"},
+{w:"田んぼ",g:"nature",r:"たんぼ"},
+{w:"石",g:"nature",r:"いし"},
+{w:"雨",g:"nature",r:"あめ"},
+{w:"夕食",g:"other",r:"ゆうしょく"},
+{w:"岩",g:"nature",r:"いわ"},
+{w:"音",g:"nature",r:"おと"},
+{w:"森",g:"nature",r:"もり"},
+{w:"花",g:"nature",r:"はな"},
+{w:"竹",g:"nature",r:"たけ"},
 
-{w:"大きい",g:"adj"},{w:"小さい",g:"adj"},{w:"安い",g:"adj"},{w:"高い",g:"adj"},
-{w:"新しい",g:"adj"},{w:"古い",g:"adj"},{w:"明るい",g:"adj"},{w:"暗い",g:"adj"},{w:"長い",g:"adj"},
+{w:"犬",g:"animal",r:"いぬ"},
+{w:"貝",g:"animal",r:"かい"},
+{w:"牛肉",g:"food",r:"ぎゅうにく"},
+{w:"豚",g:"animal",r:"ぶた"},
+{w:"魚",g:"animal",r:"さかな"},
+{w:"鳥",g:"animal",r:"とり"},
+{w:"米",g:"food",r:"こめ"},
+{w:"お茶",g:"food",r:"おちゃ"},
+{w:"好き",g:"other",r:"すき"},
+{w:"食べ物",g:"food",r:"たべもの"},
 
-{w:"好き",g:"other"},{w:"日本語",g:"other"},{w:"日本人",g:"other"},{w:"中国",g:"other"},
-{w:"男の人",g:"other"},{w:"女の人",g:"other"},{w:"子ども",g:"other"},{w:"友だち",g:"other"},
-{w:"名まえ",g:"other"},{w:"今",g:"other"},{w:"お茶",g:"other"},{w:"魚",g:"other"},{w:"鳥",g:"other"}
+{w:"今",g:"time",r:"いま"},
+{w:"何分",g:"time",r:"なんぷん"},
+{w:"9時半",g:"time",r:"くじはん"},
+{w:"あの方",g:"other",r:"あのかた"},
+{w:"時間",g:"time",r:"じかん"},
+
+{w:"町",g:"place",r:"まち"},
+{w:"お寺",g:"place",r:"おてら"},
+
+{w:"東",g:"dir",r:"ひがし"},
+{w:"西",g:"dir",r:"にし"},
+{w:"北",g:"dir",r:"きた"},
+{w:"南",g:"dir",r:"みなみ"},
+
+{w:"電車",g:"transport",r:"でんしゃ"},
+{w:"車",g:"transport",r:"くるま"},
+
+{w:"高い",g:"adj",r:"たかい"},
+{w:"安い",g:"adj",r:"やすい"},
+{w:"多い",g:"adj",r:"おおい"},
+{w:"少ない",g:"adj",r:"すくない"},
+{w:"新しい",g:"adj",r:"あたらしい"},
+{w:"古い",g:"adj",r:"ふるい"},
+{w:"明るい",g:"adj",r:"あかるい"},
+{w:"暗い",g:"adj",r:"くらい"},
+{w:"長い",g:"adj",r:"ながい"},
+{w:"元気",g:"adj",r:"げんき"},
+
+{w:"見ます",g:"verb",r:"みます"},
+{w:"立ちます",g:"verb",r:"たちます"},
+{w:"入ります",g:"verb",r:"はいります"},
+{w:"出ます",g:"verb",r:"でます"},
+{w:"休みます",g:"verb",r:"やすみます"},
+{w:"行きます",g:"verb",r:"いきます"},
+{w:"来ます",g:"verb",r:"きます"},
+{w:"言います",g:"verb",r:"いいます"},
+{w:"帰ります",g:"verb",r:"かえります"},
+{w:"書きます",g:"verb",r:"かきます"},
+{w:"読みます",g:"verb",r:"よみます"},
+{w:"話します",g:"verb",r:"はなします"},
+{w:"聞きます",g:"verb",r:"ききます"},
+{w:"食べます",g:"verb",r:"たべます"},
+{w:"飲みます",g:"verb",r:"のみます"},
+{w:"買います",g:"verb",r:"かいます"}
 ];
 
 let words = smartShuffle([...originalWords]);
 let currentIndex = 0;
+let revealed = false;
 
-// 初期表示（1問目）
-document.getElementById("question").textContent = words[0].w;
+// 初期表示
+render();
 
 function smartShuffle(arr) {
   let result = [];
@@ -95,18 +222,35 @@ function smartShuffle(arr) {
   return result;
 }
 
-function generate() {
-  currentIndex++;
-
-  if (currentIndex >= words.length) {
-    words = smartShuffle([...originalWords]);
-    currentIndex = 0;
-  }
-
+// 表示更新
+function render() {
   const word = words[currentIndex];
 
   document.getElementById("question").textContent = word.w;
   document.getElementById("counter").textContent = currentIndex + 1;
+
+  // 読みは最初は空
+  document.getElementById("reading").textContent = revealed ? word.r : "";
+}
+
+// ボタン動作（2段階）
+function handle() {
+  if (!revealed) {
+    // 1回目：読み表示
+    revealed = true;
+    render();
+  } else {
+    // 2回目：次へ
+    currentIndex++;
+
+    if (currentIndex >= words.length) {
+      words = smartShuffle([...originalWords]);
+      currentIndex = 0;
+    }
+
+    revealed = false;
+    render();
+  }
 }
 
 </script>
