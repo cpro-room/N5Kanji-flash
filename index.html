@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>漢字テスト</title>
+
+<style>
+  body {
+    font-family: "Yu Gothic", "Meiryo", sans-serif;
+    text-align: center;
+    margin-top: 80px;
+  }
+
+  .question {
+    font-size: 120px;
+    margin: 60px 0;
+  }
+
+  button {
+    font-size: 50px;
+    padding: 8px 24px;
+  }
+
+  .counter {
+    position: fixed;
+    right: 10px;
+    bottom: 10px;
+    font-size: 18px;
+    color: #666;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="question" id="question"></div>
+<button onclick="generate()">▶</button>
+<div class="counter" id="counter">1</div>
+
+<script>
+
+// ===== データ（グループ付き）=====
+const originalWords = [
+{w:"月よう日",g:"day"},{w:"火よう日",g:"day"},{w:"水よう日",g:"day"},
+{w:"木よう日",g:"day"},{w:"金よう日",g:"day"},{w:"土よう日",g:"day"},{w:"日よう日",g:"day"},
+
+{w:"八千円",g:"number"},{w:"三百円",g:"number"},{w:"今年",g:"time"},{w:"三年",g:"time"},{w:"四時",g:"time"},{w:"何分",g:"time"},{w:"4時半",g:"time"},{w:"時間",g:"time"},
+
+{w:"お父さん",g:"family"},{w:"お母さん",g:"family"},{w:"父",g:"family"},{w:"母",g:"family"},
+{w:"兄",g:"family"},{w:"姉",g:"family"},{w:"弟",g:"family"},{w:"妹",g:"family"},{w:"兄弟",g:"family"},
+
+{w:"口",g:"body"},{w:"目",g:"body"},{w:"耳",g:"body"},{w:"手",g:"body"},{w:"足",g:"body"},{w:"体",g:"body"},
+
+{w:"上",g:"dir"},{w:"下",g:"dir"},{w:"左",g:"dir"},{w:"右",g:"dir"},{w:"東",g:"dir"},{w:"西",g:"dir"},{w:"北",g:"dir"},{w:"南",g:"dir"},
+
+{w:"学校",g:"place"},{w:"先生",g:"place"},{w:"本",g:"place"},{w:"町",g:"place"},{w:"お寺",g:"place"},
+
+{w:"山",g:"nature"},{w:"川",g:"nature"},{w:"田",g:"nature"},{w:"石",g:"nature"},{w:"雨",g:"nature"},{w:"森",g:"nature"},{w:"花",g:"nature"},
+
+{w:"見ます",g:"verb"},{w:"立ちます",g:"verb"},{w:"入ります",g:"verb"},{w:"出ます",g:"verb"},
+{w:"行きます",g:"verb"},{w:"来ます",g:"verb"},{w:"書きます",g:"verb"},{w:"読みます",g:"verb"},{w:"話します",g:"verb"},{w:"聞きます",g:"verb"},
+
+{w:"食べます",g:"verb"},{w:"飲みます",g:"verb"},{w:"買います",g:"verb"},{w:"帰ります",g:"verb"},
+
+{w:"大きい",g:"adj"},{w:"小さい",g:"adj"},{w:"安い",g:"adj"},{w:"高い",g:"adj"},
+{w:"新しい",g:"adj"},{w:"古い",g:"adj"},{w:"明るい",g:"adj"},{w:"暗い",g:"adj"},{w:"長い",g:"adj"},
+
+{w:"好き",g:"other"},{w:"日本語",g:"other"},{w:"日本人",g:"other"},{w:"中国",g:"other"},
+{w:"男の人",g:"other"},{w:"女の人",g:"other"},{w:"子ども",g:"other"},{w:"友だち",g:"other"},
+{w:"名まえ",g:"other"},{w:"今",g:"other"},{w:"お茶",g:"other"},{w:"魚",g:"other"},{w:"鳥",g:"other"}
+];
+
+let words = smartShuffle([...originalWords]);
+let currentIndex = 0;
+
+// 初期表示（1問目）
+document.getElementById("question").textContent = words[0].w;
+
+function smartShuffle(arr) {
+  let result = [];
+  let pool = [...arr];
+  let last = null;
+
+  while (pool.length > 0) {
+    let candidates = pool.filter(x => x.g !== last);
+    if (candidates.length === 0) candidates = pool;
+
+    const pick = candidates[Math.floor(Math.random() * candidates.length)];
+
+    result.push(pick);
+    pool = pool.filter(x => x !== pick);
+    last = pick.g;
+  }
+
+  return result;
+}
+
+function generate() {
+  currentIndex++;
+
+  if (currentIndex >= words.length) {
+    words = smartShuffle([...originalWords]);
+    currentIndex = 0;
+  }
+
+  const word = words[currentIndex];
+
+  document.getElementById("question").textContent = word.w;
+  document.getElementById("counter").textContent = currentIndex + 1;
+}
+
+</script>
+
+</body>
+</html>
