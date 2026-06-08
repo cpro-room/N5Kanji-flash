@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>漢字テスト</title>
+
+<style>
+body {
+  font-family: "Yu Gothic", "Meiryo", sans-serif;
+  text-align: center;
+  margin: 0;
+  padding: 20px;
+}
+
+/* 漢字（かなり大きく） */
+.question {
+  font-size: clamp(100px, 30vw, 200px);
+  margin: 40px 0 10px;
+  line-height: 1.1;
+}
+
+/* 読み（はっきり見えるサイズ） */
+.reading {
+  font-size: clamp(40px, 10vw, 70px);
+  color: #333;
+  height: 90px;
+  margin-bottom: 30px;
+}
+
+.khmer {
+  font-size: clamp(28px, 7vw, 50px);
+  color: #555;
+  min-height: 60px;
+  margin-bottom: 30px;
+}
+
+/* ボタン（授業用・タップしやすく大きく） */
+button {
+  font-size: clamp(50px, 12vw, 80px);
+  padding: 18px 40px;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+}
+
+/* カウンター */
+.counter {
+  position: fixed;
+  right: 10px;
+  bottom: 10px;
+  font-size: 16px;
+  color: #666;
+}
+
+/* スマホ微調整 */
+@media (max-width: 600px) {
+  body {
+    padding: 10px;
+  }
+
+  .reading {
+    height: 100px;
+    margin-bottom: 20px;
+  }
+
+  button {
+    width: 90%;
+    max-width: 320px;
+  }
+}</style>
+</head>
+
+<body>
+
+<div class="question" id="question"></div>
+<div class="reading" id="reading"></div>
+<div class="khmer" id="khmer"></div>
+
+<button onclick="handle()">▶</button>
+<div class="counter" id="counter">1</div>
+
+<script>
+
+const originalWords = [
+{w:"月よう日",g:"day",r:"げつようび",k:"ថ្ងៃច័ន្ទ"},
+{w:"火よう日",g:"day",r:"かようび",k:"ថ្ងៃអង្គារ៍"},
+{w:"水よう日",g:"day",r:"すいようび",k:"ថ្ងៃពុធ"},
+{w:"木よう日",g:"day",r:"もくようび",k:"ថ្ងៃព្រហស្បត្តិ៍"},
+{w:"金よう日",g:"day",r:"きんようび",k:"ថ្ងៃសុក្រ"},
+{w:"土よう日",g:"day",r:"どようび",k:"ថ្ងៃសៅរ៍"},
+{w:"日よう日",g:"day",r:"にちようび",k:"ថ្ងៃអាទិត្យ"},
+
+{w:"八千円",g:"number",r:"はっせんえん",k:"ប្រាំបីពាន់យ៉េន"},
+{w:"三百円",g:"number",r:"さんびゃくえん",k:"បីរយយ៉េន"},
+
+{w:"今年",g:"time",r:"ことし",k:"ឆ្នាំនេះ"},
+{w:"三年",g:"time",r:"さんねん",k:"៣ឆ្នាំ"},
+{w:"日本人",g:"other",r:"にほんじん",k:"ជនជាតិជប៉ុន"},
+{w:"日本語",g:"other",r:"にほんご",k:"ភាសាជប៉ុន"},
+{w:"四時",g:"time",r:"よじ",k:"ម៉ោង៤"},
+{w:"お父さん",g:"family",r:"おとうさん",k:"ឪពុក(អ្នកដទៃ)"},
+{w:"お母さん",g:"family",r:"おかあさん",k:"ម្តាយ(អ្នកដទៃ)"},
+{w:"父",g:"family",r:"ちち",k:"ឪពុក(ខ្ញុំ)"},
+{w:"母",g:"family",r:"はは",k:"ម្តាយ(ខ្ញុំ)"},
+{w:"兄",g:"family",r:"あに",k:"បងប្រុស(ខ្ញុំ)"},
+{w:"姉",g:"family",r:"あね",k:"បងស្រី(ខ្ញុំ)"},
+{w:"弟",g:"family",r:"おとうと",k:"ប្អូនប្រុស(ខ្ញុំ)"},
+{w:"妹",g:"family",r:"いもうと",k:"ប្អូនស្រី(ខ្ញុំ)"},
+{w:"兄弟",g:"family",r:"きょうだい",k:"បងប្អូន"},
+
+{w:"中国",g:"other",r:"ちゅうごく",k:"ប្រទេសចិន"},
+{w:"男の人",g:"other",r:"おとこのひと",k:"មនុស្សប្រុស"},
+{w:"女の人",g:"other",r:"おんなのひと",k:"មនុស្សស្រី"},
+{w:"子ども",g:"other",r:"こども",k:"កូនក្មេង"},
+
+{w:"口",g:"body",r:"くち",k:"មាត់"},
+{w:"目",g:"body",r:"め",k:"ភ្នែក"},
+{w:"耳",g:"body",r:"みみ",k:"ត្រចៀក"},
+{w:"手",g:"body",r:"て",k:"ដៃ"},
+{w:"足",g:"body",r:"あし",k:"ជើង"},
+{w:"体",g:"body",r:"からだ",k:"ខ្លួនប្រាណ"},
+
+{w:"上",g:"dir",r:"うえ",k:"ខាងលើ"},
+{w:"下",g:"dir",r:"した",k:"ខាងក្រោម"},
+{w:"左",g:"dir",r:"ひだり",k:"ខាងឆ្វេង"},
+{w:"右",g:"dir",r:"みぎ",k:"ខាងស្តាំ"},
+
+{w:"大きい",g:"adj",r:"おおきい",k:"ធំ"},
+{w:"小さい",g:"adj",r:"ちいさい",k:"តូច"},
+{w:"外",g:"other",r:"そと",k:"ខាងក្រៅ"},
+
+{w:"学校",g:"place",r:"がっこう",k:"សាលារៀន"},
+{w:"先生",g:"place",r:"せんせい",k:"គ្រូ"},
+{w:"本",g:"place",r:"ほん",k:"សៀវភៅ"},
+{w:"名まえ",g:"other",r:"なまえ",k:"ឈ្មោះ"},
+{w:"友だち",g:"other",r:"ともだち",k:"មិត្តភក្តិ"},
+
+{w:"山",g:"nature",r:"やま",k:"ភ្នំ"},
+{w:"川",g:"nature",r:"かわ",k:"ស្ទឹង"},
+{w:"田んぼ",g:"nature",r:"たんぼ",k:"វាលស្រែ"},
+{w:"石",g:"nature",r:"いし",k:"ថ្ម"},
+{w:"雨",g:"nature",r:"あめ",k:"ភ្លៀង"},
+{w:"夕食",g:"other",r:"ゆうしょく",k:"អាហារពេលល្ងាច"},
+{w:"岩",g:"nature",r:"いわ",k:"ថ្ម/សិលា"},
+{w:"音",g:"nature",r:"おと",k:"សំលេង"},
+{w:"森",g:"nature",r:"もり",k:"ព្រៃក្រាស់"},
+{w:"花",g:"nature",r:"はな",k:"ផ្កា"},
+{w:"竹",g:"nature",r:"たけ",k:"ឬស្សី"},
+
+{w:"犬",g:"animal",r:"いぬ",k:"ឆ្កែ"},
+{w:"貝",g:"animal",r:"かい",k:"សត្វខ្ចៅខ្យង"},
+{w:"牛肉",g:"food",r:"ぎゅうにく",k:"សាច់គោ"},
+{w:"豚",g:"animal",r:"ぶた",k:"សត្វជ្រូក"},
+{w:"魚",g:"animal",r:"さかな",k:"ត្រី"},
+{w:"鳥",g:"animal",r:"とり",k:"សត្វស្លាប"},
+{w:"米",g:"food",r:"こめ",k:"អង្ករ"},
+{w:"お茶",g:"food",r:"おちゃ",k:"តែ/ទឹកតែ"},
+{w:"好き",g:"other",r:"すき",k:"ចូលចិត្ត"},
+{w:"食べ物",g:"food",r:"たべもの",k:"គ្រឿងបរិភោគ"},
+
+{w:"今",g:"time",r:"いま",k:"ឥឡូវ"},
+{w:"何分",g:"time",r:"なんぷん",k:"ប៉ុន្មាននាទី"},
+{w:"9時半",g:"time",r:"くじはん",k:"ម៉ោង៩កន្លះ"},
+{w:"あの方",g:"other",r:"あのかた",k:"គាត់នោះ"},
+{w:"時間",g:"time",r:"じかん",k:"ពេលវេលា/ម៉ោង"},
+
+{w:"町",g:"place",r:"まち",k:"ទីប្រជុំជន/ក្រុងតូច"},
+{w:"お寺",g:"place",r:"おてら",k:"វត្ត(ពុទ្ធសាសនា)"},
+
+{w:"東",g:"dir",r:"ひがし",k:"ខាងកើត"},
+{w:"西",g:"dir",r:"にし",k:"ខាងលិច"},
+{w:"北",g:"dir",r:"きた",k:"ខាងជើង"},
+{w:"南",g:"dir",r:"みなみ",k:"ខាងត្បួង"},
+
+{w:"電車",g:"transport",r:"でんしゃ",k:"រថភ្លើង"},
+{w:"車",g:"transport",r:"くるま",k:"ឡាន"},
+
+{w:"高い",g:"adj",r:"たかい",k:"ខ្ពស់/ថ្លៃ"},
+{w:"安い",g:"adj",r:"やすい",k:"ថោក"},
+{w:"多い",g:"adj",r:"おおい",k:"មានច្រើន"},
+{w:"少ない",g:"adj",r:"すくない",k:"មានតិច"},
+{w:"新しい",g:"adj",r:"あたらしい",k:"ថ្មី"},
+{w:"古い",g:"adj",r:"ふるい",k:"ចាស់(វត្ថុ)"},
+{w:"明るい",g:"adj",r:"あかるい",k:"ភ្លឺ/រស់រាយ"},
+{w:"暗い",g:"adj",r:"くらい",k:"ងងឹត/ ក្រញ៉ូវ"},
+{w:"長い",g:"adj",r:"ながい",k:"វែង"},
+{w:"元気",g:"adj",r:"げんき",k:"សុខភាពល្អ"},
+
+{w:"見ます",g:"verb",r:"みます",k:"មើល"},
+{w:"立ちます",g:"verb",r:"たちます",k:"ឈរ"},
+{w:"入ります",g:"verb",r:"はいります",k:"ចូល"},
+{w:"出ます",g:"verb",r:"でます",k:"ចេញ"},
+{w:"休みます",g:"verb",r:"やすみます",k:"សំរាក"},
+{w:"行きます",g:"verb",r:"いきます",k:"ទៅ"},
+{w:"来ます",g:"verb",r:"きます",k:"មក"},
+{w:"言います",g:"verb",r:"いいます",k:"និយាយ/ពោល"},
+{w:"帰ります",g:"verb",r:"かえります",k:"ត្រឡប់ទៅ/ត្រឡប់មក"},
+{w:"書きます",g:"verb",r:"かきます",k:"សរសេរ"},
+{w:"読みます",g:"verb",r:"よみます",k:"អាន"},
+{w:"話します",g:"verb",r:"はなします",k:"និយាយ(គ្នា)"},
+{w:"聞きます",g:"verb",r:"ききます",k:"ស្តាប់/សួរ"},
+{w:"食べます",g:"verb",r:"たべます",k:"ញុំា/ហូប(ទំពារ)"},
+{w:"飲みます",g:"verb",r:"のみます",k:"ញុំា/ហូប/ផឹក/លេប"},
+{w:"買います",g:"verb",r:"かいます",k:"ទិញ"},
+];
+
+let words = smartShuffle([...originalWords]);
+let currentIndex = 0;
+let revealed = false;
+
+// 初期表示
+render();
+
+function smartShuffle(arr) {
+  let result = [];
+  let pool = [...arr];
+  let last = null;
+
+  while (pool.length > 0) {
+    let candidates = pool.filter(x => x.g !== last);
+    if (candidates.length === 0) candidates = pool;
+
+    const pick = candidates[Math.floor(Math.random() * candidates.length)];
+
+    result.push(pick);
+    pool = pool.filter(x => x !== pick);
+    last = pick.g;
+  }
+
+  return result;
+}
+
+// 表示更新
+function render() {
+  const word = words[currentIndex];
+
+  document.getElementById("question").textContent = word.w;
+  document.getElementById("counter").textContent = currentIndex + 1;
+
+  document.getElementById("reading").textContent =
+    revealed ? word.r : "";
+
+  document.getElementById("khmer").textContent =
+    revealed ? word.k : "";
+}
+
+// ボタン動作（2段階）
+function handle() {
+  if (!revealed) {
+    // 1回目：読み表示
+    revealed = true;
+    render();
+  } else {
+    // 2回目：次へ
+    currentIndex++;
+
+    if (currentIndex >= words.length) {
+      words = smartShuffle([...originalWords]);
+      currentIndex = 0;
+    }
+
+    revealed = false;
+    render();
+  }
+}
+
+</script>
+
+</body>
+</html>
